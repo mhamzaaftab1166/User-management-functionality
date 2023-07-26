@@ -1,15 +1,38 @@
 const Joi = require("joi");
 const express = require("express");
 const User = require("../models/user");
+const { Op } = require("sequelize");
 const router = express.Router();
-const users = [
-  { id: 1, name: "hamza" },
-  { id: 2, name: "wahid" },
-  { id: 3, name: "saad" },
-];
 
 router.get("/", async (req, res) => {
-  const users = await User.findAll();
+  console.log(req.query);
+  const { type, name, email, isArchive } = req.query;
+  const whereClause = {};
+
+  if (type) {
+    whereClause.type = type;
+  }
+
+  if (name) {
+    whereClause.name = {
+      [Op.like]: `%${name}%`,
+    };
+  }
+
+  if (email) {
+    whereClause.email = {
+      [Op.like]: `%${email}%`,
+    };
+  }
+
+  if (isArchive) {
+    whereClause.isArchive = isArchive === "true";
+  }
+
+  const users = await User.findAll({
+    where: whereClause,
+  });
+
   res.send(users);
 });
 
@@ -56,7 +79,7 @@ router.delete("/:id", async (req, res) => {
 });
 
 router.get("/:email", async (req, res) => {
-  const user = await User.fndOne({
+  const user = await User.findOne({
     where: { email: req.params.email },
   });
   if (!user)
